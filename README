@@ -1,13 +1,11 @@
 To get the id of an extension use:
 
-```
-cat FILE.PEM | \
-openssl rsa -pubout -outform DER | \
-openssl dgst -sha256 | \
-awk '{print $2}' | \
-cut -c 1-32 | \
-tr '0-9a-f' 'a-p'
-```
+   cat FILE.PEM | \
+   openssl rsa -pubout -outform DER | \
+   openssl dgst -sha256 | \
+   awk '{print $2}' | \
+   cut -c 1-32 | \
+   tr '0-9a-f' 'a-p'
 
 where FILE.PEM is the private key used to sign the extension.
 
