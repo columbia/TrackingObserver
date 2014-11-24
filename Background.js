@@ -337,6 +337,24 @@ function initializeMessageListeners() {
                 }
                 return true;
             }
+            else if(request.type == "registerTollhouse") {
+                console.log("Request to register Tollhouse (id: " + sender.id + ") received!");
+                notifyTollhouse ||= function(tab_url, tracker_url, tracker_type) {
+                  trackerData = {
+                    tab_url: tab_url,
+                    tracker_url: tracker_url,
+                    tracker_type: tracker_type
+                  };
+                  chrome.runtime.sendMessage(sender.id, 
+                      { 
+                        type: 'newTrackerNotification',
+                        request: trackerData
+                      },
+                      null
+                  );
+                }
+                return true;
+            }
             else if(request.type == "getTrackers") {
                 getTrackers(sendResponse);
                 return true;
@@ -724,7 +742,10 @@ function logBlockedTracker(trackerDomain, tabId) {
     if (!trackersPerTab[tabId]) {
 		trackersPerTab[tabId] = [];
 	}
-    trackersPerTab[tabId].push(trackerData);    
+    trackersPerTab[tabId].push(trackerData);
+    if (notifyTollhouse) {
+      notifyTollhouse(tabId, trackerDomain, '');
+    }
 }
 
 function logTracker(originatingTabDomain, trackerDomain, trackerCategory, tabId, trackerReferrer) {
@@ -767,6 +788,9 @@ function logTracker(originatingTabDomain, trackerDomain, trackerCategory, tabId,
 	}
     trackersPerTab[tabId].push(trackerData);
 
+    if (notifyTollhouse) {
+      notifyTollhouse(tabId, trackerDomain, trackerCategory);
+    }
 	// Notify registered extensions about tracking on this page
     for (var addon in registeredAddons) {
         chrome.runtime.sendMessage(addon, 
