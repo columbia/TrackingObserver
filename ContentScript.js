@@ -150,7 +150,7 @@ var monkeypatchCookieCode =
             'var cookieString = "";' +
             'for (var cookieName in cookieStore) {' +
                 'cookieString += cookieName + "=" + cookieStore[cookieName];' +
-                'cookieString += ";";' +
+                'cookieString += "; ";' +
             '}' +
             // remove last semicolon
             'cookieString = cookieString.substring(0, cookieString.length - 1);' +
