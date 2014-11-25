@@ -39,7 +39,7 @@ var tabUrlArray = {};
 
 // Keep track of registered add-ons
 var registeredAddons = {}; // name --> link map
-
+var notifyTollhouse;
 
 initialize();
 
@@ -339,19 +339,21 @@ function initializeMessageListeners() {
             }
             else if(request.type == "registerTollhouse") {
                 console.log("Request to register Tollhouse (id: " + sender.id + ") received!");
-                notifyTollhouse ||= function(tab_url, tracker_url, tracker_type) {
-                  trackerData = {
-                    tab_url: tab_url,
-                    tracker_url: tracker_url,
-                    tracker_type: tracker_type
-                  };
-                  chrome.runtime.sendMessage(sender.id, 
-                      { 
-                        type: 'newTrackerNotification',
-                        request: trackerData
-                      },
-                      null
-                  );
+                if (!notifyTollhouse) {
+                  notifyTollhouse = function(tab_url, tracker_url, tracker_type) {
+                    var trackerData = {
+                      tab_url: tab_url,
+                      tracker_url: tracker_url,
+                      tracker_type: tracker_type
+                    };
+                    chrome.runtime.sendMessage(sender.id, 
+                        {
+                          type: 'newTrackerNotification',
+                          data: trackerData
+                        },
+                        null
+                    );
+                  }
                 }
                 return true;
             }
@@ -744,7 +746,7 @@ function logBlockedTracker(trackerDomain, tabId) {
 	}
     trackersPerTab[tabId].push(trackerData);
     if (notifyTollhouse) {
-      notifyTollhouse(tabId, trackerDomain, '');
+      notifyTollhouse(tabList[tabId].url, trackerDomain, '');
     }
 }
 
@@ -789,7 +791,7 @@ function logTracker(originatingTabDomain, trackerDomain, trackerCategory, tabId,
     trackersPerTab[tabId].push(trackerData);
 
     if (notifyTollhouse) {
-      notifyTollhouse(tabId, trackerDomain, trackerCategory);
+      notifyTollhouse(tabList[tabId].url, trackerDomain, trackerCategory);
     }
 	// Notify registered extensions about tracking on this page
     for (var addon in registeredAddons) {
