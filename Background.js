@@ -764,6 +764,11 @@ function logTracker(originatingTabDomain, trackerDomain, trackerCategory, tabId,
 		//date: JSON.stringify(new Date())
 	};
 
+  //Randomly disable cookies from trackers
+  if (Math.random() < 0.5) {
+    removeCookiesForTrackerDomain(trackerDomain)
+  }
+
 	if (trackerCategory === 'D' || trackerCategory === 'F') {
 		trackerData.referrer = trackerReferrer;
         trackerData.domain = trackerDomain + "-referredby-" + trackerReferrer;
