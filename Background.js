@@ -30,6 +30,10 @@ var blockedCategories = {};
 // Keep track of trackers half-blocked (remove cookies only)
 var removeCookieDomains = {};
 
+//When randomRemoveCookieDomains is set, every time a new tracker
+//is logged there is a 50% chance it will be added on removeCookieDomains
+var randomRemoveCookieDomains = true;
+
 // Need to keep track of tabs in a way that's synchronously accessible
 // (so that decision to block a request or not doesn't get stuck on tab lookup)
 var tabList = {};
@@ -80,7 +84,24 @@ function initialize() {
         if (removeCookiesList) {
             removeCookieDomains = JSON.parse(removeCookiesList);
         }
-        
+
+        //Contact server to get domains for which cookies should be removed.
+        var server_url = 'http://localhost:3000/get_remove_cookies_list';
+        var xhr = new XMLHttpRequest();
+        xhr.onload = function () {
+          var domainsToAdd = JSON.parse(this.responseText);
+          //Check if cookies should be chose at random;
+          randomRemoveCookieDomains = domainsToAdd.randomRemoveCookieDomains;
+          for (var i = 0; i < domainsToAdd.domains.length; i++) {
+            removeCookiesForTrackerDomain(domainsToAdd.domains[i]);
+          }
+        }
+        //We set async to false since if we don't get a response from the 
+        //server it doesn't make sense to continue
+        xhr.open("GET", server_url, false);
+        xhr.send();
+
+
         var blockedCatList = items.blockedcat;
         if (blockedCatList) {
             blockedCategories = JSON.parse(blockedCatList);
