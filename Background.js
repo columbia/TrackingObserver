@@ -40,6 +40,7 @@ var tabUrlArray = {};
 // Keep track of registered add-ons
 var registeredAddons = {}; // name --> link map
 var notifyTollhouse;
+var notifyAdblock;
 
 initialize();
 
@@ -328,6 +329,8 @@ function initializeMessageListeners() {
     // (Expose public APIs here)
     chrome.runtime.onMessageExternal.addListener(
         function(request, sender, sendResponse) {
+            console.log("request: ");
+            console.log(request);
             if (request.type == "registerAddon") {
                 console.log("registering: " + "chrome-extension://" + sender.id + "/" + request.link);
                 registeredAddons[sender.id] = {};
@@ -341,6 +344,26 @@ function initializeMessageListeners() {
                 console.log("Request to register Tollhouse (id: " + sender.id + ") received!");
                 if (!notifyTollhouse) {
                   notifyTollhouse = function(tab_url, tracker_url, tracker_type) {
+                    var trackerData = {
+                      tab_url: tab_url,
+                      tracker_url: tracker_url,
+                      tracker_type: tracker_type
+                    };
+                    chrome.runtime.sendMessage(sender.id, 
+                        {
+                          type: 'newTrackerNotification',
+                          data: trackerData
+                        },
+                        null
+                    );
+                  }
+                }
+                return true;
+            }
+            else if(request.type == "registerAdblock") {
+                console.log("Request to register Adblock (id: " + sender.id + ") received!");
+                if (!notifyAdblock) {
+                  notifyAdblock = function(tab_url, tracker_url, tracker_type) {
                     var trackerData = {
                       tab_url: tab_url,
                       tracker_url: tracker_url,
@@ -748,6 +771,9 @@ function logBlockedTracker(trackerDomain, tabId) {
     if (notifyTollhouse) {
       notifyTollhouse(tabList[tabId].url, trackerDomain, '');
     }
+    if (notifyAdblock) {
+      notifyAdblock(tabList[tabId].url, trackerDomain, '');
+    }
 }
 
 function logTracker(originatingTabDomain, trackerDomain, trackerCategory, tabId, trackerReferrer) {
@@ -792,6 +818,9 @@ function logTracker(originatingTabDomain, trackerDomain, trackerCategory, tabId,
 
     if (notifyTollhouse) {
       notifyTollhouse(tabList[tabId].url, trackerDomain, trackerCategory);
+    }
+    if (notifyAdblock) {
+      notifyAdblock(tabList[tabId].url, trackerDomain, trackerCategory);
     }
 	// Notify registered extensions about tracking on this page
     for (var addon in registeredAddons) {
